@@ -1,0 +1,54 @@
+---
+title: "sentiment analysis"
+author: "Jinli Wu & Xiyu Zhang"
+date: "5/6/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r library, warning=FALSE, message=FALSE}
+library(tidytext)
+library(tidyverse)
+library(SnowballC)
+library(ggplot2)
+library(sentimentr)
+```
+
+```{r setup the dataframe}
+#reading in data
+df <- read.csv("English_corpus.csv")
+#tokenizing words
+df_word <- df %>%
+  unnest_tokens(word, content)
+```
+
+
+```{r create a list of stopwords}
+#Viewing most frequent words after deleting generic stop words
+df_word %>%
+  anti_join(stop_words)%>%
+  count(word,sort=TRUE)
+#Creating topic specific stop words based on word frequency (200 most frequent words)
+stop_words_frequency <- tibble(word = c("electricity","power","energy","china","grid","reform","1","2","2015","3","2016","reforms","china's","2014","4","table","5","chinese","yunnan","ndrc","yuan","2017","9","6","2010","sdr","2012","2018","10","gw","2011","guangdong"),  
+                                      lexicon = c("frequency"))
+custom_stop_words <- bind_rows(stop_words_frequency,stop_words)
+#Viewing the top 50 negative and positve words after deleting common stop words and domain-specific stop words
+df_word %>%
+  anti_join(custom_stop_words)%>%
+  inner_join(get_sentiments("bing"))%>%
+  group_by(sentiment)%>%
+  count(word,sort=TRUE)%>%
+  slice_max(n, n = 50)
+#Creating sentiment words: we deleted technical terminologies that are neutral in sentiment but are interpreted by the dictionaries to carry sentiment (e.g., smart grid, being a technical term describing a type of electric technology, will be interpreted as having positive sentiment)
+stop_words_sentiment <- tibble(word = c("marginal","critical","deviation","regression","gross","penalty","reform","reforms","smart","optimal","competitive","dynamic","clean","lead","free","leading","led","dominated","rich","poverty","strict","regard","recommendations","sensitive","approval"),
+                               lexicon = c("sentiment"))
+custom_stop_words <- bind_rows(stop_words_sentiment,custom_stop_words)
+#creating a dataframe exclusing the stop words
+df_word <- df %>%
+  unnest_tokens(word, content)%>%
+  anti_join(custom_stop_words)
+```
+
