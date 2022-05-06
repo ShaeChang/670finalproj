@@ -1,60 +1,95 @@
 ---
-title: "Policy_documents_analysis"
+title: "Policy Documents Analysis"
 author: "ShaeChang"
 date: "5/5/2022"
 output: html_document
 ---
+
+# Part 1
+
+## Preface
+
+China's electricity system reform is an important part of China's economic reform process. In 2015, a new round of power system reform formulated the institutional framework naming “controlling the middle and liberalizing the two ends”. This means limiting the monopoly power of the grid company occupying the "middle" part, and liberalize the users side and the generation side, which are the "two ends", and once have been regulated by the generation and consumption plan made by the government. In the power industry, China is gradually transitioning from a planned economy to a market economy. 
+
+This process has been driven by a series of detailed policies. In recent years, China's electric power reform has certain achievements, but many policies are far from successful. For example, the theme of one of the six supporting documents of "the No.9 Document", the pilot reform of incremental power distribution, by the end of 2020, only one fifth of the pilots survived to obtain operational qualification. In this context, our core concern is: to what extent, did the array of policy concepts brought up at 2015 still seems feasible and even successful? To what extent, on the contrary, these concepts were already abandoned and substituted by other new concepts?
+
+This part of the study will inspect a series of national-level policy documents issued by the government from 2015 to 2020, using a set of techniques of text mining.
+
+### 1. Set Up Packages
 
 ```{r setup packages, warning=FALSE, message=FALSE}
 library(dplyr)
 library(tidyverse)
 library(tidymodels)
 library(textrecipes)
-library(jiebaR) # the Chinese tokenizer package
+library(jiebaR) 
+ # the Chinese tokenizer package
 library(purrr)
 library(ggplot2)
 library(wordcloud2)
 library(RColorBrewer)
+library(topicmodels)
+library(tidytext)
+library(quanteda)
 ```
 
-```{r}
-policy_doc <- read_csv("policydocument.csv") %>%
+### 2. Build Up Corpus
+
+The document issued by the Central Committee of the Communist Party of China and the State Council in March 2015, "Several Opinions on Further Deepening the Reform of the Electric Power System" (also been called, "the No.9 Document"), and six supporting documents issued six months later, marked the beginning of this round of electricity industry reform. The No.9 Document itself, clarified the main direction and spirit of the reform, whilst the six supporting documents clarified more detailed implementation plans. These documents are considered constructed the basic direction and the framework of the reform. That is the reason why we started from these six documents below.
+
+In all, we inspected 79 national-level documents on electricity reform from 2015 to 2020. All the original materials come from the official website of Chinese government, as well as the Electricity Reform Policy Document Catalog compiled by Polaris Power Grid.
+
+Manually, we build up the corresponding corpus. We annotated the year, title and body content of the literature as features, deleted all the format including space and lines (http://www.esjson.com/delSpace.html), and excluded irrelevant documents. Limited by our capacity, we are not including documents issued from 2021 to 2022.
+
+We used an R package named [jiebaR] (https://github.com/qinwf/jiebaR) for Chinese text mining. The default setting of the tokenizer, worker(), includes word segmentation engine "MixSegment", as "type = 'mix'", which is a mix of "MPSegment" (Maximum Probability segmentation procedure) and "HMMSegment" (A hidden Markov model segmentation procedure); a default Chinese word segmentation lexicon, as "dict = "inst/dict/jieba.dict.utf8", which can be supplemented by a user customized terms segmentation lexicon, using "user =" argument; a default setting of segmenting a string, so if want to apply it to a data frame, then need to turn the "bylines = TRUE".
+
+We customized a Chinese word segmentation lexicons and a Chinese stop word list. For the lexicon, we downloaded the electricity industry topic cell lexicons from an official website of an Chinese input software Sougou (https://pinyin.sogou.com/dict/search/search_list/%B5%E7%C1%A6/normal/), and manually added tens of electricity industry reform terms, by converting the .scel format lexicon to .txt format through an open source converter ShenLan (https://github.com/studyzy/imewlconverter). For the stop words, we downloaded the list from GitHub (https://github.com/YueYongDev/stopwords), and manually added about a hundred stop words due to the output in the project.
+
+Lastly, we defined a loop function in order to build up a tidy-format text tibble, as the segment() function in JiebaR could only used to segment a vector.
+
+```{r tokenize Chinese Policy Documents}
+policy_doc <- read_csv("data/policydocument.csv") %>%
   select(number, title, year, content) %>%
   filter(!is.na(content)) %>%
   filter(!is.na(year))
 
-custom_stopword <- read_csv("customed stop word.csv")
-
+# Customize a tokenizer
 tokenizer = worker(
-  user = "electricity_word.txt",
-  # Added customed user vocabulary list; which is the electricity industry topic cell lexicons downloaded at https://pinyin.sogou.com/dict/search/search_list/%B5%E7%C1%A6/normal/
-  # to convert the .scel lexicons into .txt file for editing, https://github.com/studyzy/imewlconverter is used.
-  # Note: more specific electricity industry reform vocabularies are typed in the .txt file manually
-  stop_word = "customed chinese stop word.txt",
-  # the stop words are customed based on Chinese R online forum & manually edited based on industry knowledge
+  user = "data/electricity_word.txt",
+  # Added customed user vocabulary list. 
+  stop_word = "data/customed_chinese_stop_word.txt",
+  # The stop words are customed based on Chinese R online forum & manually edited based on industry knowledge
   bylines = TRUE
-  #able to convert each document respectively
+  # Able to convert each document respectively, tokenize all documents by row
   )
 
-# tokenize all the content, the electricity industry reform policy documents, inserted
+# Tokenize all the content, the electricity industry reform policy documents, respectively
 doc_token <- segment(policy_doc$content,tokenizer)
 
-#define a function to extract the tokens, and apply this function to all of the tokens by documents, because the Chinese text mining package cannot make it automatically
+# Define a function to extract the tokens, and apply this function to all of the tokens by documents, because the Chinese text mining package cannot make it automatically
 extract_token <- function(x){
   df <- data_frame(token = doc_token[[x]], number = x, year = policy_doc$year[x], title = policy_doc$title[x])
   return(df)
 }
-policy_token <- bind_rows(lapply(1:30, extract_token))
+policy_token <- bind_rows(lapply(1:79, extract_token))
 ```
 
-## EDA: 6 sub-files
-The first file is the main file that marks the beginning of the power reform, and we use its accompanying 6 sub-files (number 2 - 7) as an example file.
+
+### 3. Exploratory Data Analysis: six supporting policy documents
+
+In our corpus, the first file is "Several Opinions on Further Deepening the Reform of the Electric Power System" ("the No.9 Document"), and the six supporting policy documents are numbered from 2 to 7. We are going to conduct the exploratory data analysis on these six texts, considering their representative status in regulating the electricity industry reform.
+
+#### Key Words
+
+We are going to extract key words from the documents through tf-idf. By setting argument "keywords" in worker(), from JiebaR, we are able to retrieve the result. Note worthy, the input and the output of keywords() should all be a vector, so a loop function "lapply()" is used again. We added two columns to the result tibble, they are the English translation of the title of the six documents, and the English translation of the key words, respectively. We could tell the relevance between the titles and the corresponding key words easily.
+
 ```{r keywords}
 idf <- worker(
   "keywords",
   user = "electricity_word.txt",
   stop_word = "customed chinese stop word.txt",
-  topn = 4,
+  topn = 5,
+  # To select the top 5 key words for each supportive documents
   bylines = TRUE
 )
 
@@ -63,11 +98,19 @@ extract_keywords <- function(x){
   return(df)
 }
 policy_keywords <- bind_rows(lapply(2:7, extract_keywords)) %>%
-  filter(!is.na(keyword))
+  filter(!is.na(keyword)) %>%
+  add_column(keyword_Eng = c(".","transmission and distribution elec_price","pilot","reform","power grid company",".","electricity market","market","transanction","market player",".","transanction institution","transanction","electricity transanction","market",".","electricity volumn","electricity generation","priority","direct transanction",".","market player","electricity sales company","electricity saling","power supply",".","self-contained","power plant","coal power","generator set")) %>%
+  add_column(title_Eng = c("Implementation Opinions on Promoting the Reform of Transmission and Distribution Electricity Prices","Implementation Opinions on Promoting the Reform of Transmission and Distribution Electricity Prices","Implementation Opinions on Promoting the Reform of Transmission and Distribution Electricity Prices","Implementation Opinions on Promoting the Reform of Transmission and Distribution Electricity Prices","Implementation Opinions on Promoting the Reform of Transmission and Distribution Electricity Prices","Implementation Opinions on Promoting the Construction of Electricity Market","Implementation Opinions on Promoting the Construction of Electricity Market","Implementation Opinions on Promoting the Construction of Electricity Market","Implementation Opinions on Promoting the Construction of Electricity Market","Implementation Opinions on Promoting the Construction of Electricity Market","Implementation Opinions on the Formation and Standardized Operation of Electricity Transanction Institutions","Implementation Opinions on the Formation and Standardized Operation of Electricity Transanction Institutions","Implementation Opinions on the Formation and Standardized Operation of Electricity Transanction Institutions","Implementation Opinions on the Formation and Standardized Operation of Electricity Transanction Institutions","Implementation Opinions on the Formation and Standardized Operation of Electricity Transanction Institutions","Implementation Opinions on the Planned Liberation of Electricity Generation and Consumption Plans","Implementation Opinions on the Planned Liberation of Electricity Generation and Consumption Plans","Implementation Opinions on the Planned Liberation of Electricity Generation and Consumption Plans","Implementation Opinions on the Planned Liberation of Electricity Generation and Consumption Plans","Implementation Opinions on the Planned Liberation of Electricity Generation and Consumption Plans","Implementation Opinions on Promoting the Reform of the Electricity Sales Side","Implementation Opinions on Promoting the Reform of the Electricity Sales Side","Implementation Opinions on Promoting the Reform of the Electricity Sales Side","Implementation Opinions on Promoting the Reform of the Electricity Sales Side","Implementation Opinions on Promoting the Reform of the Electricity Sales Side","Guiding Opinions on Strengthening and Standardizing the Supervision and Management of Coal-fired Self-Contained Power Plants","Guiding Opinions on Strengthening and Standardizing the Supervision and Management of Coal-fired Self-Contained Power Plants","Guiding Opinions on Strengthening and Standardizing the Supervision and Management of Coal-fired Self-Contained Power Plants","Guiding Opinions on Strengthening and Standardizing the Supervision and Management of Coal-fired Self-Contained Power Plants","Guiding Opinions on Strengthening and Standardizing the Supervision and Management of Coal-fired Self-Contained Power Plants"))
+  
 policy_keywords
 ```
 
-Still, analysis the 6 sub-files.
+The chart shows six supportive documents and their key words in Chinese and English.
+
+#### Key Word: Word Cloud
+
+Generate six word cloud, for more intuitive presentation of the main keywords of the six documents. We referred to several notes (https://cosx.org/2016/08/wordcloud2), (https://blog.csdn.net/qq_38865429/article/details/89407493) and (https://www.seedhk.org/2019/03/03/r-for-wordcloud/). Set a seed before generating a word cloud to make sure the work is repeatable. An R package, RColorBrewer, was installed for more color schemes, but the application was failed.
+
 ```{r wordcloud}
 subfile_token <- policy_token %>%
   filter(number >= 2 & number <= 7) %>%
@@ -79,64 +122,146 @@ p1 <- subfile_token %>%
   filter(title == "关于推进输配电价改革的实施意见") %>%
   select(token, n) %>%
   wordcloud2(size = 1, color = "#003366", backgroundColor = "#FFFFCC", shape = 'diamond')
+p1
+
 p2 <- subfile_token %>%
   filter(title == "关于推进电力市场建设的实施意见") %>%
   select(token, n) %>%
   wordcloud2(size = 1, color = "#003366", backgroundColor = "#FFFFCC", shape = 'diamond')
+p2
+
 p3 <- subfile_token %>%
   filter(title == "关于电力交易机构组建和规范运行的实施意见") %>%
   select(token, n) %>%
   wordcloud2(size = 1, color = "#003366", backgroundColor = "#FFFFCC", shape = 'diamond')
+p3
+
 p4 <- subfile_token %>%
   filter(title == "关于有序放开发用电计划的实施意见") %>%
   select(token, n) %>%
   wordcloud2(size = 1, color = "#003366", backgroundColor = "#FFFFCC")
+p4
+
 p5 <- subfile_token %>%
   filter(title == "关于推进售电侧改革的实施意见") %>%
   select(token, n) %>%
   wordcloud2(size = 1, color = "#003366", backgroundColor = "#FFFFCC")
+p5
+
 p6 <- subfile_token %>%
   filter(title == "关于加强和规范燃煤自备电厂监督管理的指导意见") %>%
   select(token, n) %>%
   wordcloud2(size = 1, color = "#003366", backgroundColor = "#FFFFCC", shape = 'diamond')
-p1
-p2
-p3
-p4
-p5
 p6
 ```
 
-## Semi-topic-modeling
+### 4. Policy Trend Discussion
 
-```{r}
+First, we are going to generate a variable called "freq", which is the proportion of a token' appearance among the sum of the appearances of all of the tokens in this year. This variable is generated for comparison between different years because the document tokens amount is different in each year.
 
+```{r Policy Trend Discussion}
+policy_token_tidy <- policy_token %>%
+  count(title, year, token) %>%
+  rename(count = n)
+total <- policy_token_tidy %>%
+  group_by(year) %>%
+  summarise(total_freq = sum(count))
+year_term_count <- policy_token_tidy %>%
+  count(year, token) %>%
+  rename(count = n) %>%
+  inner_join(total)%>%
+  mutate(freq = count/total_freq) %>%
+  #check the total tokens in one year, to see the frequency of the selected key words appearred in each years
+  arrange(year, desc(freq), token)
+
+year_term_count %>% 
+  group_by(year) %>%
+  #to choose the top 10 frequent tokens in each year
+  slice_max(freq, n = 10)
 ```
 
 
+The list is helpful for completing the stop words list.
+
+With the key words generated in the last section, we are able to count the frequencies of these key words by year in the whole document tokens, to depict a policy trend during these years. 
+
+For each of the six supportive documents, we selected one representative key word to indication the topic of the specific supportive document, such as "transmission and distribution elec_price" for the "Implementation Opinions on Promoting the Reform of Transmission and Distribution Electricity Prices" document, "electricity market" for the "Implementation Opinions on Promoting the Construction of Electricity Market", "transanction institution" for the "Implementation Opinions on the Formation and Standardized Operation of Electricity Transanction Institutions" document, and so on. These words are selected because they are simultaneously among the frequent appeared words in these years, and are the key words appeared in the list of previous word clouds, and thus been thought of representative for a policy topic which was brought out at the beginning of the electricity reform in 2015.
+
+Draw the trend of six key words with ggplot2:
+
 ```{r}
+p_year_term_counts <- year_term_count %>%
+  filter(token %in% c("输配电价", "电力市场","交易机构","直接交易","售电公司","燃煤")) %>%
+  ggplot(aes(year, freq)) +
+  geom_point() +
+  geom_smooth() +
+  facet_wrap(~token, scales = "free_y") +
+  scale_y_continuous(labels = scales::percent_format()) +
+  labs(y = "% frequency of word in yearly policy documents")
+p_year_term_counts
+```
 
+The titles of the pictures should be Chinese key words selected previously, but cannot be print. They are transmission and distribution elec_price, electricity market, transanction institution, direct transanction, electricity sales company, coal power, respectively.
 
-# see the frequency of the words in our text
-token_1 <- policy_token %>%
-  count(number, token, sort = TRUE) 
+Conclusions:
 
-token_total <- token_1 %>%
-  group_by(number) %>%
-  summarize(total = sum(n))
+(1) The data fluctuates greatly, might out of the relatively long policy-period in China's policy making sector. That means, for the same topic, the national-level documents, which are the materials of our corpus, don't need to come out each year.
 
-doc_word <- left_join(token_1, token_total)
+(2) Another possible explanation might be, we only use one keyword as a topic indicator for analysis, but not a set of keywords to represent a topic, leading to the data fluctuates greatly. Therefore, the following will use the topic modeling method for further analysis.
 
-doc_word
+### 5. Topic Modeling
+
+We are interested in grouping the documents into several clusters through topic modeling, and to compare with the six supportive documents to see if there are any deviations from the initial topic.
+
+LDA is applied with reference to several websites and books, including (https://rdrr.io/cran/topicmodels/man/lda.html) and (https://www.tidytextmining.com/topicmodeling.html#topicmodeling).
+
+```{r topic-modeling}
+#generate a Document Term Matrix for topic analysis
+policy_token_dfm <- policy_token_tidy %>%
+  cast_dfm(title, token, count)
+
+# conduct LDA while set the number of topic as 7, out of the assumption of including 6 initial topics and one irrelevant random topic
+# set a seed so that the prediction is predictable
+policy_lda <- LDA(policy_token_dfm, k = 7, control = list(seed = 1509))
+
+policy_topics <- tidy(policy_lda, matrix = "beta") 
+# "beta" is the method of extracting the per-topic-per-word probabilities from the model
+
+policy_topic_terms <- policy_topics %>%
+  group_by(topic) %>%
+  slice_max(beta, n = 10) %>%
+  ungroup() %>%
+  arrange(topic, -beta) %>%
+  
+  #provide English translation for each topics
+  add_column(term_Eng = c("electricity grid", "provincial","permission","regional","supervision","cost","price","transmission and distribution elec_price","ratified","period","electricity generation","electricity","priority","users","transanction","market","electricity volume","safeguard","participate","electricity purchase","energy","renewable energy","electricity","electricity generation","distributive","utilization efficiency","regional","pilot","project","power grid company","market","information","electricity","transanction","spot goods","institution","disclosure","spot goods transanction","transregional","region","market","transaction","electricity","institution","electricity transanction","market players","electricity volumn","transanction institution","information","electricity market","power distribution","project","power distribution grid","increment","supervision","energy","pilot","electricity grid","power supply","planning","energy","project","renewable energy","coal power","electricity price","reform","electricity generation","price","subsidy","funding"))
+
+#find the 10 terms that are most common within each topic.
+policy_topic_terms
 ```
 
 
-```{r}
-anchor_token <- bind_rows(lapply(2:7, extract_token))
+
+```{r plots}
+#Draw plots for these topics
+policy_topic_terms %>%
+  mutate(term_Eng = reorder_within(term_Eng, beta, topic)) %>%
+  ggplot(aes(beta, term_Eng, fill = factor(topic))) +
+  geom_col(show.legend = FALSE) +
+  facet_wrap(~topic, ncol = 2, scales = "free_y") + 
+  # to show the top terms for each topics, respectively
+  scale_y_reordered() +
+  labs(title = "Top 10 terms for 7 topics") +
+  theme_minimal()
 ```
 
+The result of topic modeling is pretty approximate to our initial key words generated from the 6 sub_files of the electricity reform file in 2015, which indicates the beginning of the new round electricity reform in China.
 
 
+## Summarize
 
+Of the seven topics, five overlapped with six supportive documents, while the remaining two appeared to consist of random keywords. To see a shift in policy discourse requires more analysis in the future.
+
+Due to time constraints, policy documents for the six main sub-topic areas beyond 2020 were not included. Some of them are related to the epidemic, resumption of work and production, some are related to heating production, and more are related to the construction of legislation and regulatory systems in the energy industry. Hope to have the opportunity to present this part in the future.
 
 
