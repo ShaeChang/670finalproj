@@ -1,0 +1,142 @@
+---
+title: "Policy_documents_analysis"
+author: "ShaeChang"
+date: "5/5/2022"
+output: html_document
+---
+
+```{r setup packages, warning=FALSE, message=FALSE}
+library(dplyr)
+library(tidyverse)
+library(tidymodels)
+library(textrecipes)
+library(jiebaR) # the Chinese tokenizer package
+library(purrr)
+library(ggplot2)
+library(wordcloud2)
+library(RColorBrewer)
+```
+
+```{r}
+policy_doc <- read_csv("policydocument.csv") %>%
+  select(number, title, year, content) %>%
+  filter(!is.na(content)) %>%
+  filter(!is.na(year))
+
+custom_stopword <- read_csv("customed stop word.csv")
+
+tokenizer = worker(
+  user = "electricity_word.txt",
+  # Added customed user vocabulary list; which is the electricity industry topic cell lexicons downloaded at https://pinyin.sogou.com/dict/search/search_list/%B5%E7%C1%A6/normal/
+  # to convert the .scel lexicons into .txt file for editing, https://github.com/studyzy/imewlconverter is used.
+  # Note: more specific electricity industry reform vocabularies are typed in the .txt file manually
+  stop_word = "customed chinese stop word.txt",
+  # the stop words are customed based on Chinese R online forum & manually edited based on industry knowledge
+  bylines = TRUE
+  #able to convert each document respectively
+  )
+
+# tokenize all the content, the electricity industry reform policy documents, inserted
+doc_token <- segment(policy_doc$content,tokenizer)
+
+#define a function to extract the tokens, and apply this function to all of the tokens by documents, because the Chinese text mining package cannot make it automatically
+extract_token <- function(x){
+  df <- data_frame(token = doc_token[[x]], number = x, year = policy_doc$year[x], title = policy_doc$title[x])
+  return(df)
+}
+policy_token <- bind_rows(lapply(1:30, extract_token))
+```
+
+## EDA: 6 sub-files
+The first file is the main file that marks the beginning of the power reform, and we use its accompanying 6 sub-files (number 2 - 7) as an example file.
+```{r keywords}
+idf <- worker(
+  "keywords",
+  user = "electricity_word.txt",
+  stop_word = "customed chinese stop word.txt",
+  topn = 4,
+  bylines = TRUE
+)
+
+extract_keywords <- function(x){
+  df <- data_frame(keyword = keywords(policy_doc$content[x], idf), number = x, year = policy_doc$year[x], title = policy_doc$title[x])
+  return(df)
+}
+policy_keywords <- bind_rows(lapply(2:7, extract_keywords)) %>%
+  filter(!is.na(keyword))
+policy_keywords
+```
+
+Still, analysis the 6 sub-files.
+```{r wordcloud}
+subfile_token <- policy_token %>%
+  filter(number >= 2 & number <= 7) %>%
+  count(title, token, sort = TRUE) %>%
+  filter(n >= 2)
+
+set.seed(20220506)
+p1 <- subfile_token %>%
+  filter(title == "关于推进输配电价改革的实施意见") %>%
+  select(token, n) %>%
+  wordcloud2(size = 1, color = "#003366", backgroundColor = "#FFFFCC", shape = 'diamond')
+p2 <- subfile_token %>%
+  filter(title == "关于推进电力市场建设的实施意见") %>%
+  select(token, n) %>%
+  wordcloud2(size = 1, color = "#003366", backgroundColor = "#FFFFCC", shape = 'diamond')
+p3 <- subfile_token %>%
+  filter(title == "关于电力交易机构组建和规范运行的实施意见") %>%
+  select(token, n) %>%
+  wordcloud2(size = 1, color = "#003366", backgroundColor = "#FFFFCC", shape = 'diamond')
+p4 <- subfile_token %>%
+  filter(title == "关于有序放开发用电计划的实施意见") %>%
+  select(token, n) %>%
+  wordcloud2(size = 1, color = "#003366", backgroundColor = "#FFFFCC")
+p5 <- subfile_token %>%
+  filter(title == "关于推进售电侧改革的实施意见") %>%
+  select(token, n) %>%
+  wordcloud2(size = 1, color = "#003366", backgroundColor = "#FFFFCC")
+p6 <- subfile_token %>%
+  filter(title == "关于加强和规范燃煤自备电厂监督管理的指导意见") %>%
+  select(token, n) %>%
+  wordcloud2(size = 1, color = "#003366", backgroundColor = "#FFFFCC", shape = 'diamond')
+p1
+p2
+p3
+p4
+p5
+p6
+```
+
+## Semi-topic-modeling
+
+```{r}
+
+```
+
+
+```{r}
+
+
+# see the frequency of the words in our text
+token_1 <- policy_token %>%
+  count(number, token, sort = TRUE) 
+
+token_total <- token_1 %>%
+  group_by(number) %>%
+  summarize(total = sum(n))
+
+doc_word <- left_join(token_1, token_total)
+
+doc_word
+```
+
+
+```{r}
+anchor_token <- bind_rows(lapply(2:7, extract_token))
+```
+
+
+
+
+
+
