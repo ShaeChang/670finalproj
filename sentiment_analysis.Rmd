@@ -17,6 +17,8 @@ library(tidyverse)
 library(SnowballC)
 library(ggplot2)
 library(sentimentr)
+library(reshape2)
+library(wordcloud)
 ```
 
 ```{r setup the dataframe}
@@ -108,5 +110,26 @@ ggplot(data=df_word_afinn, aes(x=index,y=sentiment_weighted,fill=as.factor(artic
   xlab("Word location in the course of a paper (%)")+
   ylab("Weighted sentiment (negative vs. positive)")+
   ggtitle("Analysis of changes of sentiment in papers on the topic of electricity reforms\nin China",subtitle="Words as tokens & Using AFINN lexicons")
+```
+
+# Sentiment wordcloud
+## Negative vs. Positive
+```{r}
+df_word %>%
+  inner_join(get_sentiments("bing"))%>%
+  count(word, sentiment, sort = TRUE) %>%
+  acast(word ~ sentiment, value.var = "n", fill = 0)%>%
+  comparison.cloud(colors = c("blue", "red"), max.words = 100)
+```
+
+## Emotions
+```{r}
+df_word %>%
+  inner_join(get_sentiments("nrc"))%>%
+  count(word, sentiment, sort = TRUE) %>%
+  filter(sentiment %in% c("joy","trust","sadness","anger"))%>%
+  acast(word ~ sentiment, value.var = "n", fill = 0)%>%
+  comparison.cloud(colors = c("yellow", "green","blue","red"), max.words = 100)
+```
 ```
 
