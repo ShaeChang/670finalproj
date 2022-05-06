@@ -2,14 +2,16 @@
 title: "sentiment analysis"
 author: "Jinli Wu & Xiyu Zhang"
 date: "5/6/2022"
-output: html_document
+output: 
+  html_document:
+    code_folding: hide
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
 ```
 
-```{r library, warning=FALSE, message=FALSE}
+```{r library}
 library(tidytext)
 library(tidyverse)
 library(SnowballC)
@@ -23,20 +25,18 @@ df <- read.csv("English_corpus.csv")
 #tokenizing words
 df_word <- df %>%
   unnest_tokens(word, content)
-```
-
-
-```{r create a list of stopwords}
+#create a list of stopwords
 #Viewing most frequent words after deleting generic stop words
-df_word %>%
+frequent_words <- df_word %>%
   anti_join(stop_words)%>%
-  count(word,sort=TRUE)
+  count(word,sort=TRUE)%>%
+  slice_max(n, n = 200)
 #Creating topic specific stop words based on word frequency (200 most frequent words)
 stop_words_frequency <- tibble(word = c("electricity","power","energy","china","grid","reform","1","2","2015","3","2016","reforms","china's","2014","4","table","5","chinese","yunnan","ndrc","yuan","2017","9","6","2010","sdr","2012","2018","10","gw","2011","guangdong"),  
                                       lexicon = c("frequency"))
 custom_stop_words <- bind_rows(stop_words_frequency,stop_words)
 #Viewing the top 50 negative and positve words after deleting common stop words and domain-specific stop words
-df_word %>%
+frequent_sentiment_words <- df_word %>%
   anti_join(custom_stop_words)%>%
   inner_join(get_sentiments("bing"))%>%
   group_by(sentiment)%>%
@@ -46,9 +46,67 @@ df_word %>%
 stop_words_sentiment <- tibble(word = c("marginal","critical","deviation","regression","gross","penalty","reform","reforms","smart","optimal","competitive","dynamic","clean","lead","free","leading","led","dominated","rich","poverty","strict","regard","recommendations","sensitive","approval"),
                                lexicon = c("sentiment"))
 custom_stop_words <- bind_rows(stop_words_sentiment,custom_stop_words)
-#creating a dataframe exclusing the stop words
+#creating a dataframe exclusing the new stop words
 df_word <- df %>%
   unnest_tokens(word, content)%>%
   anti_join(custom_stop_words)
+```
+
+# Changes of sentiment over the course of papers
+## Using bing sentiment lexicon 
+```{r sentiment throughout papers using bing lexicons}
+#createing a tibble that contains the length (in words) of each paper
+df_word_size <- df_word%>%
+  group_by(article_id)%>%
+  count()
+
+#generating a tibble that can then be passed to ggplot
+df_word_bing <- df_word %>%
+#create a variable named index which tracks where the words are located in a paper, a value of 1 means the words are in the first 1% of the paper, a value of 2 the words are in the second 1% of the paper, and so on. 
+  group_by(article_id)%>%
+  mutate(wordnumber = row_number())%>%
+  mutate(n=max(wordnumber))%>%
+  mutate(index = wordnumber %/% (n*0.01))%>%
+  ungroup()%>%
+#attaching sentiment to words using bing lexicons
+  inner_join(get_sentiments("bing"))%>%
+#counting number of positive and negative words by paper and word location
+  count(article_id,index,sentiment)%>%
+#calculating the net sentiment 
+  pivot_wider(names_from=sentiment,values_from=n, values_fill = 0)%>%
+  mutate(sentiment = positive - negative)%>%
+#generating weight for the sentiment
+  inner_join(df_word_size)%>%
+  mutate(weight=10000/n)%>%
+  mutate(sentiment_weighted = sentiment*weight)
+
+#generating the graph with x axis as word location and y axis as sentiment; bars of each paper are stacked on each other
+ggplot(data=df_word_bing, aes(x=index,y=sentiment_weighted,fill=as.factor(article_id)))+
+  geom_col(show.legend = FALSE)+
+  xlab("Word location in the course of a paper (%)")+
+  ylab("Weighted sentiment (negative vs. positive)")+
+  ggtitle("Analysis of changes of sentiment in papers on the topic of electricity reforms\nin China",subtitle="Words as tokens & Using bing lexicons")
+```
+
+## Using AFINN sentiment lexicon 
+```{r sentiment throughout papers using AFINN lexicons}
+#similar operation as above but using sentiment lexicons from the AFINN
+df_word_afinn <- df_word %>%
+  group_by(article_id)%>%
+  mutate(wordnumber = row_number())%>%
+  mutate(n=max(wordnumber))%>%
+  mutate(index = wordnumber %/% (n*0.01))%>%
+  ungroup()%>%
+  inner_join(get_sentiments("afinn")) %>% 
+  group_by(article_id, index)%>%
+  summarise(sentiment = sum(value))%>%
+  inner_join(df_word_size)%>%
+  mutate(weight=10000/n)%>%
+  mutate(sentiment_weighted = sentiment*weight)
+ggplot(data=df_word_afinn, aes(x=index,y=sentiment_weighted,fill=as.factor(article_id)))+
+  geom_col(show.legend = FALSE)+
+  xlab("Word location in the course of a paper (%)")+
+  ylab("Weighted sentiment (negative vs. positive)")+
+  ggtitle("Analysis of changes of sentiment in papers on the topic of electricity reforms\nin China",subtitle="Words as tokens & Using AFINN lexicons")
 ```
 
