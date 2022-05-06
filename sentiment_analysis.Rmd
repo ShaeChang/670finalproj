@@ -19,9 +19,37 @@ library(ggplot2)
 library(sentimentr)
 library(reshape2)
 library(wordcloud)
+library(jiebaR)
+library(dplyr)
 ```
 
-```{r setup the dataframe}
+# Sentiment analysis 
+
+## Introduction
+As an effort to go beyond the scope of content on text analysis covered in class, we explored sentiment analysis and applied the techniques to the area of China's electricity reforms to demonstrate the potential of its applications. 
+
+Because sentiment analysis relies heavily on the quality of sentiment lexicons and because English lexicons (e.g., bing, afinn) are far more robust and accessible than Chinese lexicons, in the following analyses we will not limit ourselves to Chinese documents like we have done in previous analyses. 
+
+Our corpus consists of published journal papers in both English and Chinese languages. We chose journal papers for a series of analyses in this section for two reasons: 1) there is an abundance of journal papers in both Chinese and English languages, allowing us to apply both Chinese and English sentiment lexicons; 2) it is interesting to compare attitudents/sentiments of scholars toward China's elecricity reform differ in Chinese-speaking versus English-speaking scholarly contexts, which will likely different due to the social, political, ideological, and cultural differences proxied by the two different languages.
+
+## Methodology of selecting journal papers
+### English articles
+For journal articles in English, we searched for the key words, "China electricity reform", using Google Scholar. We filter the date of publications to only include papers that are published after 2016, which marks the very start of electricity reform. We adopted two exclusionary criteria: 1) books were excluded because we wanted to focus on journal articles; 2) articles with low relevancy to electricity reform in China were excluded (e.g., an article on the topic of "analysis of electricity consumption in China" was excluded because it did not focus on electricity reform). The search results are sorted by relevance. We selected the first 50 articles using these inclusionary and exclusionary criteria. Amongst these 50 articles, we furtehr excluded those that could not be fully accessed online using Georgetown librart service. These procedures resulted in a total of 43 journal articles in English to be analyzed with sentiment analysis.
+
+### Chinese articles
+For journal articles in Chinese, we searched for the key words, "中国电力改革" which directly translates to "China electricity reform", using Zhi Wang (知网；a Chinese database for journal articles that function in a similar way to Google Scholar). We adopted the same inclusionary and exclusionary criteria. The search results are sorted by the number of times being cited, which helped us locate publications that are of high quality and are influential in the field. We selected the first 50 articles. Amongst these 50 articles, we furtehr excluded those that could not be fully accessed online using Georgetown librart service. These procedures resulted in a total of _____ journal articles in Chinese to be analyzed with sentiment analysis.
+
+
+## Changes of sentiment over the course of papers
+How do journal articles talk about electricity reforms? Do they use more positive words or negative words. Does sentiment remain consistent throughout the paper? Comparing articles in English and Chinese, do they show different patterns in terms of how sentiment changes? Does one type of articles tend to end in a negative tone while the other in a positive tone? Does one type of articles consistently use more positive or negative words thoughout the paper? Those are interesting questions that we will explore in this section. 
+
+To track changes in sentiment over the course of a paper, we dissect the paper's body content (from introduction to conclusion) into 100 shares. We then calculate the sentiment for each share and plot them along the x-axis in the form of bar graph. As such, the graph's x-axis indicates where a certain chunk of text is located in a given paper and the y-axis indicates the corresponding sentiment of this chunk of text. Sentiments from different articles are stacked on top of each other, showing the overall pattern of sentiment changes across artciles. We experimented on different sentiment lexicons to explore whether the results are contingent upon the lexicons being used or are relatively consistent. The outcomes are presented by article languages and sentiment lexicons.
+
+The approach to understand sentiment change over the course of text is inspired by the samples in the book "Text Mining with R: A Tidy Approach" by Julia Silge and David Robinson. 
+
+### English articles 
+When generating the tokens, we used both general stop words and domain-specific stop words.
+```{r setup the English dataframe}
 #reading in data
 df <- read.csv("English_corpus.csv")
 #tokenizing words
@@ -54,8 +82,8 @@ df_word <- df %>%
   anti_join(custom_stop_words)
 ```
 
-# Changes of sentiment over the course of papers
-## Using bing sentiment lexicon 
+#### Using bing sentiment lexicon 
+We first used bing sentiment lexicon for sentiment calculation. The bing lexicon categorizes words in a binary fashion into positive and negative categories. As such, to calculate the overall sentiment of a chunk of text (i.e., each share), we can substract the number of occurence of negative words from the number of occurence of positive words to get the net sentiment.
 ```{r sentiment throughout papers using bing lexicons}
 #createing a tibble that contains the length (in words) of each paper
 df_word_size <- df_word%>%
@@ -90,9 +118,12 @@ ggplot(data=df_word_bing, aes(x=index,y=sentiment_weighted,fill=as.factor(articl
   ggtitle("Analysis of changes of sentiment in papers on the topic of electricity reforms\nin China",subtitle="Words as tokens & Using bing lexicons")
 ```
 
+From the graph, we can see English journal articles seem to have more positive sentiment at the beginning and the ending. Overall, articles seem to have more positive sentiment than negative.
+
 ## Using AFINN sentiment lexicon 
+We then used AFINN sentiment lexicons to confirm the results. The AFINN lexicon assigns words with a score that runs between -5 and 5, with negative scores indicating negative sentiment and positive scores indicating positive sentiment. We can adding up the sentiment of each word to calculate the sentiment of each share. 
 ```{r sentiment throughout papers using AFINN lexicons}
-#similar operation as above but using sentiment lexicons from the AFINN
+#similar operation as above but using sentiment lexicon from the AFINN
 df_word_afinn <- df_word %>%
   group_by(article_id)%>%
   mutate(wordnumber = row_number())%>%
@@ -112,8 +143,104 @@ ggplot(data=df_word_afinn, aes(x=index,y=sentiment_weighted,fill=as.factor(artic
   ggtitle("Analysis of changes of sentiment in papers on the topic of electricity reforms\nin China",subtitle="Words as tokens & Using AFINN lexicons")
 ```
 
-# Sentiment wordcloud
-## Negative vs. Positive
+The graph does not look too different from the one generated using bing lexicons. This suggests that the pattern in sentiment change is robust to the lexicon tools being used.
+
+### Chinese articles 
+When generating the tokens, we used both general Chinese stop words and domain-specific stop words.
+```{r}
+#reading in Chinese data
+chinese_df <- read_csv("Chinese_corpus.csv")
+#creating the tokenizer
+chinese_tokenizer = worker(
+  user = "electricity_word.txt",
+  stop_word = "customed_chinese_stop_word_sentiment_analysis.txt",
+  bylines = TRUE
+  )
+#tokenizing
+chinese_tokens_matrix <- segment(chinese_df$content,chinese_tokenizer)
+#creating a function that output the tokens in tidy format
+extract_token <- function(x){
+  df <- data_frame(word = chinese_tokens_matrix[[x]], article_id = x)
+  return(df)
+}
+#Chinese daa is tidy format
+chinese_tokens <- bind_rows(lapply(1:10, extract_token))
+```
+
+#### Using NTUSD sentiment lexicon 
+Similar to bing sentiment lexicon, NTUSD  sentiment lexicon categorizes each Chinese character/characters as being positive or negative. As such, this graph is comparable to the one generated using 
+```{r}
+#reading in ntusd sentiment lexicons
+ntusd_neg <- read_csv("ntusd_neg.csv")%>%
+  mutate(sentiment="negative")
+ntusd_pos <- read_csv("ntusd_pos.csv")%>%
+  mutate(sentiment="positive")
+ntusd_sentiment_lexicons  <- bind_rows(ntusd_neg,ntusd_pos)
+#Creating graphs of sentiment changes in Chinese papers using the ntusd sentiment lexicons, because the steps to create the graph are similar to the process of creating the English graph (using bing), detailed comments were omitted here
+chinese_word_size <- chinese_tokens%>%
+  group_by(article_id)%>%
+  count()
+chinese_word_ntusd <- chinese_tokens %>%
+  group_by(article_id)%>%
+  mutate(wordnumber = row_number())%>%
+  mutate(n=max(wordnumber))%>%
+  mutate(index = wordnumber %/% (n*0.01))%>%
+  ungroup()%>%
+  inner_join(ntusd_sentiment_lexicons)%>%
+  count(article_id,index,sentiment)%>%
+  pivot_wider(names_from=sentiment,values_from=n, values_fill = 0)%>%
+  mutate(sentiment = positive - negative)%>%
+  inner_join(chinese_word_size)%>%
+  mutate(weight=10000/n)%>%
+  mutate(sentiment_weighted = sentiment*weight)
+ggplot(data=chinese_word_ntusd, aes(x=index,y=sentiment_weighted,fill=as.factor(article_id)))+
+  geom_col(show.legend = FALSE)+
+  xlab("Word location in the course of a paper (%)")+
+  ylab("Weighted sentiment (negative vs. positive)")+
+  ggtitle("Analysis of changes of sentiment in Chinese papers on the topic of electricity\nreforms in China",subtitle="Using ntusd lexicons")
+```
+
+The pattern of sentiment change of Chinese articles resembles that of English articles articles in the sense that the sentiment seems to be more positive at the beginning and ending of a given article. One contrast seems to be that Chinese articles are more reserved in using negative sentiment as compared to English articles. 
+
+#### Using BosonNLP sentiment lexicon
+Similar to AFINN sentiment lexicon, BosonNLP sentiment lexicon assigns words with a score that runs between -6 and 6, with negative scores indicating negative sentiment and positive scores indicating positive sentiment. 
+```{r}
+#read in the BosonNLP sentiment lexicon
+boson_sentiment <- read.table("BosonNLP_sentiment_score.txt",fill = TRUE,nrows=120000)%>%
+  rename(word=V1,sentiment=V2)
+#similar operation as the English version using AFINN
+chinese_word_size <- chinese_tokens%>%
+  group_by(article_id)%>%
+  count()
+chinese_word_boson <- chinese_tokens %>%
+  group_by(article_id)%>%
+  mutate(wordnumber = row_number())%>%
+  mutate(n=max(wordnumber))%>%
+  mutate(index = wordnumber %/% (n*0.01))%>%
+  ungroup()%>%
+  inner_join(boson_sentiment) %>% 
+  group_by(article_id, index)%>%
+  summarise(sentiment = sum(sentiment))%>%
+  inner_join(df_word_size)%>%
+  mutate(weight=10000/n)%>%
+  mutate(sentiment_weighted = sentiment*weight)
+ggplot(data=chinese_word_boson, aes(x=index,y=sentiment_weighted,fill=as.factor(article_id)))+
+  geom_col(show.legend = FALSE)+
+  xlab("Word location in the course of a paper (%)")+
+  ylab("Weighted sentiment (negative vs. positive)")+
+  ggtitle("Analysis of changes of sentiment in Chinese papers on the topic of electricity\nreforms in China",subtitle="Using BosonNLP lexicon")
+```
+
+Using BosonNLP sentiment lexicon, a stark contrast between English and Chinese articles is that Chinese articles rarely have net negative sentiment. This result is very different from the result based on NTUSD sentiment lexicon. This suggests that the result of sentiment anaysis is  sensitive to the sentiment lexicon being used.
+
+## Sentiment wordcloud
+What are the words that people use when they talk positively or negatively about electricity reforms in China? This question can be explored using wordcloud denoted by sentiment. Answering alike questions in a policy setting can help us understand what potential challenges we should overcome and what advantages we can potentially capitalize on to facilitate certian policy changes/implementations.
+
+The approach to create wordcloud based on sentiment is inspired by the samples in the book "Text Mining with R: A Tidy Approach" by Julia Silge and David Robinson。
+
+### Negative vs. positive
+We first visualize the wordcloud based on general valence (i.e., being good or bad).
+
 ```{r}
 df_word %>%
   inner_join(get_sentiments("bing"))%>%
@@ -122,7 +249,8 @@ df_word %>%
   comparison.cloud(colors = c("blue", "red"), max.words = 100)
 ```
 
-## Emotions
+### Emotions
+Next, we  visualize the wordcloud based on emotions. Emotions of words are using the nrc lexicon, which categorizes words in a binary fashion for different emotions inlcuding joy, sadness, and others.
 ```{r}
 df_word %>%
   inner_join(get_sentiments("nrc"))%>%
@@ -131,5 +259,51 @@ df_word %>%
   acast(word ~ sentiment, value.var = "n", fill = 0)%>%
   comparison.cloud(colors = c("yellow", "green","blue","red"), max.words = 100)
 ```
+
+
+## Accounting for negations
+The techniques used so far have not taken into account negations (e.g., "I am not good" has a negative sentiment while "I am good" has a positive one). Below we explored a R package called sentimentr that accounts for valence shifters (e.g., not, but). This technique analyzes sentences as the basic units. We replicate sentiment changes of English articles but this time use sentimentr to account for negations. 
+
+### sentiment change
+```{r}
+#creating data
+df1 <- read.csv("English_corpus.csv")
+df1[2,4] = paste0(df1[2,4],df1[3,4])
+df1[16,4] = paste0(df1[16,4],df1[17,4])
+df1[19,4] = paste0(df1[19,4],df1[20,4])
+df1[21,4] = paste0(df1[21,4],df1[22,4])
+df1[23,4] = paste0(df1[23,4],df1[24,4])
+df1[28,4] = paste0(df1[28,4],df1[29,4])
+df1[34,4] = paste0(df1[34,4],df1[35,4])
+df1[36,4] = paste0(df1[36,4],df1[37,4])
+df1[41,4] = paste0(df1[41,4],df1[42,4])
+df1[44,4] = paste0(df1[44,4],df1[45,4])
+df1[49,4] = paste0(df1[49,4],df1[50,4])
+df1[52,4] = paste0(df1[52,4],df1[53,4])
+df1[55,4] = paste0(df1[55,4],df1[56,4])
+delete_roles <- c(3,17,20,22,24,29,35,37,42,45,50,53,56)
+df1 <- df1[-delete_roles,]
+
+#overall sentiment by papers
+sentiment_bysentence <- sentiment(df1$content)%>%
+  group_by(element_id)%>%
+  mutate(nsentences=max(sentence_id))%>%
+  mutate(index=sentence_id %/% (nsentences*0.01))%>%
+  group_by(element_id,index)%>%
+  summarize(sentiment=mean(sentiment))
+ggplot(sentiment_bysentence,aes(x=index,y=sentiment,fill=as.factor(element_id))) +
+  geom_col(show.legend = FALSE)
 ```
 
+Again, the pattern shows that articles tend to be more positive toward the beginning and ending. However, using sentimentr, the result now shows English articles are  disproportionately more positive than negative, simialr to the result of Chinese articles using BosonNLP sentiment lexicon
+
+### overall sentiment
+Lastly, sentimentr can also calculate the overall sentiment for large chuncks of text, such as the entire journal paper, while accounting for negations.  Do English journal articles have a positive or negative tone and how much do they differ from each other? We plot the the distribution of the overall sentiment of papers below.
+```{r}
+#overall sentiment by papers
+sentiment_bydocument <- sentiment_by(df1$content)
+ggplot(sentiment_bydocument,aes(ave_sentiment))+
+  geom_histogram(binwidth=0.02)
+```
+
+It looks like English papers all have a positive net sentiment score whose distribution seems to have a normal form.
