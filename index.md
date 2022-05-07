@@ -17,6 +17,14 @@ This process has been driven by a series of detailed policies. In recent years, 
 
 This part of the study will inspect a series of national-level policy documents issued by the government from 2015 to 2020, using a set of techniques of text mining.
 
+### Part 2
+
+As an effort to go beyond the scope of content on text analysis covered in class, we explored sentiment analysis and applied the techniques to the area of China’s electricity reforms to demonstrate the potential of its applications.
+
+The questions in this section is less driven by our research question, but more driven by the methods: How can we apply certain techniques to a topic/field, and what insights we can get from that.
+
+In this section, we answered questions such as: Do journal articles use more positive words or negative words. Does sentiment remain consistent throughout the paper? What are the words that people use when they talk positively or negatively about electricity reforms in China? Does taking into account negations (e.g., not good) change our findings?
+
 
 ## Corpus Building
 
