@@ -5,7 +5,8 @@
 There are two questions drove our project:
 
 To what extent, did the array of policy concepts brought up at 2015 still seems feasible and even successful? To what extent, on the contrary, these concepts were already abandoned and substituted by other new concepts?
-Real social science analysis in Chinese context, given the technical threshold?
+
+Is there real social science analysis in Chinese context, given the technical threshold?
 
 ## Problem Defination
 
@@ -21,7 +22,7 @@ This part of the study will inspect a series of national-level policy documents 
 
 As an effort to go beyond the scope of content on text analysis covered in class, we explored sentiment analysis and applied the techniques to the area of China’s electricity reforms to demonstrate the potential of its applications.
 
-The questions in this section is less driven by our research question, but more driven by the methods: How can we apply certain techniques to a topic/field, and what insights we can get from that.
+The question in this section is *Is there real social science analysis in Chinese context, given the technical threshold?* It is also driven by the methods: How can we apply certain techniques to a topic/field, and what insights we can get from that.
 
 In this section, we answered questions such as: Do journal articles use more positive words or negative words. Does sentiment remain consistent throughout the paper? What are the words that people use when they talk positively or negatively about electricity reforms in China? Does taking into account negations (e.g., not good) change our findings?
 
