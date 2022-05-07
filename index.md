@@ -40,7 +40,7 @@ For journal articles in Chinese, we searched for the key words, “中国电力�
 
 ## Results 
 
-Please click [here](add links) for our final report
+Please click [here](https://github.com/ShaeChang/670finalproj/blob/gh-pages/Final_repot.html) for our final report
 
 ## Authors
 
@@ -50,18 +50,28 @@ Jinli Wu @jw1935
 
 ## Reference
 Robinson, D., & Silge Julia. Text mining with R: A tidy approach. retrieved from: https://www.tidytextmining.com/
-Silge J, Robinson D (2016). “tidytext: Text Mining and Analysis Using Tidy Data Principles in R.” _JOSS_,*1*(3). doi: 10.21105/joss.00037 (URL: https://doi.org/10.21105/joss.00037), <URL:
-http://dx.doi.org/10.21105/joss.00037>.
+
+Silge J, Robinson D (2016). “tidytext: Text Mining and Analysis Using Tidy Data Principles in R.” _JOSS_,*1*(3). doi: 10.21105/joss.00037 (URL: https://doi.org/10.21105/joss.00037), <URL:http://dx.doi.org/10.21105/joss.00037>.
+
 词库搜索_ “电力” 搜索结果_搜狗输入法词库. (n.d.). Retrieved May 7, 2022, from https://pinyin.sogou.com/dict/search/search_list/%B5%E7%C1%A6/normal/
+
 郎大为. (2016, August). 可能是目前最好的词云解决方案 wordcloud2 | 统计之都. https://cosx.org/2016/08/wordcloud2
+
 Barbara. (2019, March 3). 如何用R语言做中文词云 – Seedhk. https://www.seedhk.org/2019/03/03/r-for-wordcloud/
+
 Devin. (2022). 深蓝词库转换 [C#]. https://github.com/studyzy/imewlconverter (Original work published 2012)
+
 YueYong. (2022). 中文常用停用词表. https://github.com/YueYongDev/stopwords (Original work published 2019)
+
 LUOJIZ. (n.d.). R语言绘制词云图（中文&英文）_LUOJIZ1的博客-CSDN博客_r语言词云图. Retrieved May 7, 2022, from https://blog.csdn.net/qq_38865429/article/details/89407493
+
 Qin Wenfeng and Wu Yanyi (2019). jiebaR: Chinese Text Segmentation. R package
   version 0.11. https://CRAN.R-project.org/package=jiebaR
+  
 Rinker, T. W. (2021). sentimentr: Calculate Text Polarity Sentiment version
   2.9.0. https://github.com/trinker/sentimentr
+  
 Ku, L. W., Liang, Y. T., & Chen, H. H. (2006, March). Opinion Extraction, Summarization and Tracking in News and Blog Corpora. In AAAI spring symposium: Computational approaches to analyzing weblogs.
+
 Min, K., Ma, C., Zhao, T., & Li, H. (2015). BosonNLP: An ensemble approach for word segmentation and POS tagging. In Natural language processing and Chinese computing (pp. 520-526). Springer, Cham.
 
