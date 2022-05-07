@@ -40,7 +40,7 @@ For journal articles in Chinese, we searched for the key words, “中国电力�
 
 ## Results 
 
-Please click [here](https://github.com/ShaeChang/670finalproj/blob/gh-pages/Final_repot.html) for our final report
+Please click [here](https://github.com/ShaeChang/670finalproj/blob/main/Final_repot.html) for our final report
 
 ## Authors
 
