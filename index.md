@@ -1,4 +1,5 @@
-## Group Name
+# China electricity industry reform:
+## Insights with text analysis
 
 Group Member: Xiyu Zhang @ShaeChang, and Jinli Wu @jw1935
 
