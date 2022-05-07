@@ -1,39 +1,45 @@
 # China electricity industry reform: Insights with text analysis
 
-Group Member: Xiyu Zhang @ShaeChang, and Jinli Wu @jw1935
+## Description
 
-You can use the [editor on GitHub](https://github.com/ShaeChang/670finalproj/edit/gh-pages/index.md) to maintain and preview the content for your website in Markdown files.
+There are two questions drove our project:
 
-Whenever you commit to this repository, GitHub Pages will run [Jekyll](https://jekyllrb.com/) to rebuild the pages in your site, from the content in your Markdown files.
+To what extent, did the array of policy concepts brought up at 2015 still seems feasible and even successful? To what extent, on the contrary, these concepts were already abandoned and substituted by other new concepts?
+Real social science analysis in Chinese context, given the technical threshold?
 
-### Markdown
+## Problem Defination
 
-Markdown is a lightweight and easy-to-use syntax for styling your writing. It includes conventions for
+### Part 1
 
-```markdown
-Syntax highlighted code block
+China's electricity system reform is an important part of China's economic reform process. In 2015, a new round of power system reform formulated the institutional framework naming “controlling the middle and liberalizing the two ends”. This means limiting the monopoly power of the grid company occupying the "middle" part, and liberalize the users side and the generation side, which are the "two ends", and once have been regulated by the generation and consumption plan made by the government. In the power industry, China is gradually transitioning from a planned economy to a market economy. 
 
-# Header 1
-## Header 2
-### Header 3
+This process has been driven by a series of detailed policies. In recent years, China's electric power reform has certain achievements, but many policies are far from successful. For example, the theme of one of the six supporting documents of "the No.9 Document", the pilot reform of incremental power distribution, by the end of 2020, only one fifth of the pilots survived to obtain operational qualification. In this context, our core concern is: to what extent, did the array of policy concepts brought up at 2015 still seems feasible and even successful? To what extent, on the contrary, these concepts were already abandoned and substituted by other new concepts?
 
-- Bulleted
-- List
+This part of the study will inspect a series of national-level policy documents issued by the government from 2015 to 2020, using a set of techniques of text mining.
 
-1. Numbered
-2. List
 
-**Bold** and _Italic_ and `Code` text
+## Corpus Building
 
-[Link](url) and ![Image](src)
-```
+### Part 1
+The document issued by the Central Committee of the Communist Party of China and the State Council in March 2015, "Several Opinions on Further Deepening the Reform of the Electric Power System" (also been called, "the No.9 Document"), and six supporting documents issued six months later, marked the beginning of this round of electricity industry reform. The No.9 Document itself, clarified the main direction and spirit of the reform, whilst the six supporting documents clarified more detailed implementation plans. These documents are considered constructed the basic direction and the framework of the reform. That is the reason why we started from these six documents below.
 
-For more details see [Basic writing and formatting syntax](https://docs.github.com/en/github/writing-on-github/getting-started-with-writing-and-formatting-on-github/basic-writing-and-formatting-syntax).
+In all, we inspected 79 national-level documents on electricity reform from 2015 to 2020. All the original materials come from the official website of Chinese government, as well as the Electricity Reform Policy Document Catalog compiled by Polaris Power Grid.
 
-### Jekyll Themes
+Manually, we build up the corresponding corpus. We annotated the year, title and body content of the literature as features, deleted all the format including space and lines with [online tools](http://www.esjson.com/delSpace.html), and excluded irrelevant documents. Limited by our capacity, we are not including documents issued from 2021 to 2022.
 
-Your Pages site will use the layout and styles from the Jekyll theme you have selected in your [repository settings](https://github.com/ShaeChang/670finalproj/settings/pages). The name of this theme is saved in the Jekyll `_config.yml` configuration file.
+We used an R package named [jiebaR](https://github.com/qinwf/jiebaR) for Chinese text mining. The default setting of the tokenizer, worker(), includes word segmentation engine "MixSegment", as "type = 'mix'", which is a mix of "MPSegment" (Maximum Probability segmentation procedure) and "HMMSegment" (A hidden Markov model segmentation procedure); a default Chinese word segmentation lexicon, as "dict = "inst/dict/jieba.dict.utf8", which can be supplemented by a user customized terms segmentation lexicon, using "user =" argument; a default setting of segmenting a string, so if want to apply it to a data frame, then need to turn the "bylines = TRUE".
 
-### Support or Contact
+We customized a Chinese word segmentation lexicons and a Chinese stop word list. For the lexicon, we downloaded the electricity industry topic cell lexicons from an official website of an Chinese input software [Sougou](https://pinyin.sogou.com/dict/search/search_list/%B5%E7%C1%A6/normal/), and manually added tens of electricity industry reform terms, by converting the .scel format lexicon to .txt format through an open source converter [ShenLan](https://github.com/studyzy/imewlconverter). For the stop words, we downloaded the list from [GitHub](https://github.com/YueYongDev/stopwords), and manually added about a hundred stop words due to the output in the project.
 
-Having trouble with Pages? Check out our [documentation](https://docs.github.com/categories/github-pages-basics/) or [contact support](https://support.github.com/contact) and we’ll help you sort it out.
+
+## Results and Reports
+
+To see our full report, please click [here](add links)
+
+## Authors
+
+Xiyu Zhang, @ShaeChang
+
+Jinli Wu @jw1935
+
+## Reference
