@@ -1,4 +1,6 @@
-## Welcome to GitHub Pages
+## Group Name
+
+Group Member: Xiyu Zhang @ShaeChang, and Jinli Wu @jw1935
 
 You can use the [editor on GitHub](https://github.com/ShaeChang/670finalproj/edit/gh-pages/index.md) to maintain and preview the content for your website in Markdown files.
 
